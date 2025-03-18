@@ -50,7 +50,9 @@ export default function LeaveRequestsPage() {
   }, []);
 
   const filteredRequests = leaveRequests.filter((req) => {
-    const matchesName = req.fullName.toLowerCase().includes(searchName.toLowerCase());
+    const matchesName = req.fullName
+      .toLowerCase()
+      .includes(searchName.toLowerCase());
     let matchesDate = true;
     if (searchDate) {
       const dateOnly = searchDate; // YYYY-MM-DD
@@ -69,9 +71,12 @@ export default function LeaveRequestsPage() {
   });
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this request?")) return;
+    if (!window.confirm("Are you sure you want to delete this request?"))
+      return;
     try {
-      const res = await fetch(`/api/leave-requests/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/leave-requests/${id}`, {
+        method: "DELETE",
+      });
       if (!res.ok) throw new Error("Failed to delete");
       setLeaveRequests((prev) => prev.filter((req) => req.id !== id));
     } catch (err) {
@@ -96,7 +101,7 @@ export default function LeaveRequestsPage() {
       if (!res.ok) throw new Error("Failed to update status");
       const updated = await res.json();
       setLeaveRequests((prev) =>
-        prev.map((req) => (req.id === id ? updated : req))
+        prev.map((req) => (req.id === id ? updated : req)),
       );
     } catch (err) {
       console.error(err);
@@ -136,7 +141,6 @@ export default function LeaveRequestsPage() {
       <table className="w-full border border-gray-300 rounded-md">
         <thead className="bg-gray-100">
           <tr>
-            <th className="p-2 border border-gray-300">ID</th>
             <th className="p-2 border border-gray-300">Full Name</th>
             <th className="p-2 border border-gray-300">Leave Type</th>
             <th className="p-2 border border-gray-300">Date Range</th>
@@ -148,7 +152,6 @@ export default function LeaveRequestsPage() {
         <tbody>
           {sortedRequests.map((req) => (
             <tr key={req.id}>
-              <td className="p-2 border border-gray-300">{req.id}</td>
               <td className="p-2 border border-gray-300">{req.fullName}</td>
               <td className="p-2 border border-gray-300">{req.leaveType}</td>
               <td className="p-2 border border-gray-300">
@@ -157,9 +160,14 @@ export default function LeaveRequestsPage() {
               <td className="p-2 border border-gray-300">
                 {new Date(req.createdAt).toLocaleString()}
               </td>
-              <td className="p-2 border border-gray-300">{req.approvalStatus}</td>
+              <td className="p-2 border border-gray-300">
+                {req.approvalStatus}
+              </td>
               <td className="p-2 border border-gray-300 space-x-2">
-                <Button variant="destructive" onClick={() => handleDelete(req.id)}>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleDelete(req.id)}
+                >
                   Delete
                 </Button>
                 {req.approvalStatus === "NOT_APPROVED" && (

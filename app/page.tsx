@@ -1,17 +1,23 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
-import { addDays, format, differenceInDays, isBefore, startOfDay } from "date-fns"
-import { CalendarIcon } from "lucide-react"
+import * as React from "react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  addDays,
+  format,
+  differenceInDays,
+  isBefore,
+  startOfDay,
+} from "date-fns";
+import { CalendarIcon } from "lucide-react";
 
 // ShadCN UI components
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Calendar } from "@/components/ui/calendar"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Form,
   FormControl,
@@ -19,22 +25,27 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
+} from "@/components/ui/form";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+} from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // Preprocessor to convert input into a Date object
 const toDate = (arg: unknown) => {
   if (typeof arg === "string" || arg instanceof Date) {
-    const d = new Date(arg)
-    if (!isNaN(d.getTime())) return d
+    const d = new Date(arg);
+    if (!isNaN(d.getTime())) return d;
   }
-  return arg
-}
+  return arg;
+};
 
 // Using superRefine to combine all date validations
 const createLeaveRequestSchema = z
@@ -51,18 +62,17 @@ const createLeaveRequestSchema = z
     }),
   })
   .superRefine((data, ctx) => {
-    const today = startOfDay(new Date())
-    const from = startOfDay(data.dateRange.from)
-    const to = startOfDay(data.dateRange.to)
+    const today = startOfDay(new Date());
+    const from = startOfDay(data.dateRange.from);
+    const to = startOfDay(data.dateRange.to);
 
     // ไม่อนุญาติให้บันทึกวันลาย้อนหลัง
     if (isBefore(from, today)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message:
-          "ไม่อนุญาติให้บันทึกวันลาย้อนหลัง",
+        message: "ไม่อนุญาติให้บันทึกวันลาย้อนหลัง",
         path: ["dateRange", "from"],
-      })
+      });
     }
 
     // เฉพาะกรณีพักร้อน
@@ -71,28 +81,26 @@ const createLeaveRequestSchema = z
       if (differenceInDays(from, today) < 3) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message:
-            "กรณีพักร้อนลาล่วงหน้าอย่างน้อย 3 วัน",
+          message: "กรณีพักร้อนลาล่วงหน้าอย่างน้อย 3 วัน",
           path: ["dateRange", "from"],
-        })
+        });
       }
       // ลาติดต่อกันได้ไม่เกิน 2 วัน (to - from + 1 <= 2)
       if (differenceInDays(to, from) > 1) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message:
-            "กรณีพักร้อนลาติดต่อกันได้ไม่เกิน 2 วัน",
+          message: "กรณีพักร้อนลาติดต่อกันได้ไม่เกิน 2 วัน",
           path: ["dateRange", "to"],
-        })
+        });
       }
     }
-  })
+  });
 
-type CreateLeaveRequestSchema = z.infer<typeof createLeaveRequestSchema>
+type CreateLeaveRequestSchema = z.infer<typeof createLeaveRequestSchema>;
 
 export default function CreateLeaveRequestForm() {
-  const [openDialog, setOpenDialog] = useState(false)
-  const [dialogMessage, setDialogMessage] = useState("")
+  const [openDialog, setOpenDialog] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState("");
 
   const form = useForm<CreateLeaveRequestSchema>({
     resolver: zodResolver(createLeaveRequestSchema),
@@ -108,19 +116,19 @@ export default function CreateLeaveRequestForm() {
         to: addDays(new Date(), 1),
       },
     },
-  })
+  });
 
   // onError callback to display Dialog with validation errors
   function onError(errors: any) {
     // Check errors from nested dateRange object
     if (errors.dateRange?.from) {
-      setDialogMessage(errors.dateRange.from.message)
+      setDialogMessage(errors.dateRange.from.message);
     } else if (errors.dateRange?.to) {
-      setDialogMessage(errors.dateRange.to.message)
+      setDialogMessage(errors.dateRange.to.message);
     } else {
-      setDialogMessage("Please fix the errors in the form.")
+      setDialogMessage("Please fix the errors in the form.");
     }
-    setOpenDialog(true)
+    setOpenDialog(true);
   }
 
   // Submit handler: transform dateRange into startDate and endDate for the payload
@@ -135,21 +143,23 @@ export default function CreateLeaveRequestForm() {
         reason: values.reason,
         startDate: values.dateRange.from,
         endDate: values.dateRange.to,
-      }
+      };
       const res = await fetch("/api/leave-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-      })
+      });
       if (!res.ok) {
-        throw new Error("Failed to create leave request")
+        throw new Error("Failed to create leave request");
       }
-      form.reset()
-      alert("Leave request created successfully!")
+      form.reset();
+      alert("Leave request created successfully!");
     } catch (error) {
-      console.error(error)
-      setDialogMessage("Something went wrong while submitting your leave request.")
-      setOpenDialog(true)
+      console.error(error);
+      setDialogMessage(
+        "Something went wrong while submitting your leave request.",
+      );
+      setOpenDialog(true);
     }
   }
 
@@ -166,7 +176,10 @@ export default function CreateLeaveRequestForm() {
       </Dialog>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-4">
+        <form
+          onSubmit={form.handleSubmit(onSubmit, onError)}
+          className="space-y-4"
+        >
           {/* Full Name */}
           <FormField
             control={form.control}
@@ -311,5 +324,5 @@ export default function CreateLeaveRequestForm() {
         </form>
       </Form>
     </>
-  )
+  );
 }
