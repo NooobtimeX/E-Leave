@@ -1,0 +1,39 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model LeaveRequest {
+  id               Int             @id @default(autoincrement())
+  fullName         String          // ชื่อ - นามสกุล (required)
+  position         String          // ตำแหน่ง (required)
+  email            String?         // อีเมล์ (optional)
+  phoneNumber      String          // เบอร์โทรศัพท์ (required)
+  leaveType        LeaveType       // ประเภทการลา (required)
+  reason           String          // สาเหตุการลา (required)
+  startDate        DateTime        @default(now())  // วันเริ่มต้น (default)
+  endDate          DateTime        @default(now())  // วันสิ้นสุด (default)
+  totalDays        Int             @default(0)       // จำนวนนับวันที่หยุด (default)
+  attachment       String?         // แนบไฟล์ (optional)
+  approvalStatus   ApprovalStatus  @default(NOT_APPROVED) // หมายเหตุ (1. ได้อนุมัติ 2. ไม่อนุมัติ)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+}
+
+enum LeaveType {
+  SICK      // ลาป่วย
+  PERSONAL  // ลากิจ
+  VACATION  // พักร้อน
+  OTHER     // อื่นๆ
+}
+
+enum ApprovalStatus {
+  APPROVED
+  NOT_APPROVED
+}
