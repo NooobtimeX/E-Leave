@@ -19,13 +19,13 @@ type LeaveRequest = {
   phoneNumber: string;
   leaveType: string; // SICK | PERSONAL | VACATION | OTHER
   reason: string;
-  startDate: string; // ISO string from DB
-  endDate: string; // ISO string from DB
+  startDate: string;
+  endDate: string;
   totalDays: number;
   attachment?: string | null;
   approvalStatus: "APPROVED" | "NOT_APPROVED";
-  createdAt: string; // ISO string
-  updatedAt: string; // ISO string
+  createdAt: string;
+  updatedAt: string;
 };
 
 export default function LeaveRequestsPage() {
