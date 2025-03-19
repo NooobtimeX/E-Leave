@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Temple by Region</title>
+  <style>
+    /* Use bg.jpg as background for the whole page */
+    body {
+      background: url('bg.jpg') no-repeat center center fixed;
+      background-size: cover;
+      margin: 0;
+      padding: 0;
+    }
+    
+    /* Container styling */
+    #temple.templeall {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      text-align: center;
+      font-family: sans-serif;
+      /* Optional: Add a background color with transparency for readability */
+      border-radius: 8px;
+    }
+    
+    /* Title and subtitle */
+    #temple.templeall h1 {
+      margin-bottom: 10px;
+      font-size: 2rem;
+    }
+    #temple.templeall h2 {
+      margin-bottom: 30px;
+      font-size: 1.2rem;
+      color: #666;
+    }
+    
+    /* Toggle button styling */
+    #toggleBtn {
+      padding: 10px 20px;
+      margin-bottom: 20px;
+      cursor: pointer;
+      border: none;
+      background-color: #007BFF;
+      color: white;
+      font-size: 1rem;
+      border-radius: 5px;
+    }
+    
+    /* Slider container */
+    .slider-container {
+      width: 90%;
+      margin: 0 auto;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    /* Slider track */
+    .temple-slider {
+      display: flex;
+      transition: transform 0.5s ease;
+    }
+    
+    /* Individual item */
+    .temple-item {
+      position: relative; /* for overlay positioning */
+      box-sizing: border-box;
+      text-align: center;
+      padding: 10px;
+    }
+    .temple-item img {
+      width: 300px;
+      height: 300px;
+      object-fit: cover;
+      display: block;
+      margin: 0 auto;
+      border-radius: 8px;
+    }
+    /* Center text overlay on photo */
+    .temple-item p {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      margin: 0;
+      padding: 5px 10px;
+      background: none;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: bold;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    }
+    
+    /* Dots container */
+    .dots-container {
+      margin-top: 10px;
+      text-align: center;
+    }
+    
+    /* Individual dot */
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      margin: 0 5px;
+      background-color: #ccc;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    /* Active dot */
+    .dot.active {
+      background-color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div id="temple" class="templeall">
+    <h1>TEMPLE BY REGION</h1>
+    <h2>ค้นหาข้อมูลวัดตามภูมิภาค</h2>
+    <button id="toggleBtn">Pause</button>
+    <div class="slider-container">
+      <div class="temple-slider" id="templeSlider"></div>
+    </div>
+    <div class="dots-container" id="dotsContainer"></div>
+  </div>
+
+  <script>
+    // Temple items array
+    const templeItems = [
+      { src: "North.jpg", alt: "Temple in North", text: "ภาคเหนือ" },
+      { src: "Northeast.jpg", alt: "Temple in Northeast", text: "ภาคตะวันออกเฉียงเหนือ" },
+      { src: "Western.jpg", alt: "Temple in Western", text: "ภาคตะวันตก" },
+      { src: "Central.jpeg", alt: "Temple in Central", text: "ภาคกลาง" },
+      { src: "Eastern.jpg", alt: "Temple in Eastern", text: "ภาคตะวันออก" },
+      { src: "Southern.jpg", alt: "Temple in Southern", text: "ภาคใต้" }
+    ];
+
+    // Main elements
+    const slider = document.getElementById('templeSlider');
+    const dotsContainer = document.getElementById('dotsContainer');
+    const toggleBtn = document.getElementById('toggleBtn');
+
+    // Determine slides to show based on viewport width (2 to 4 photos)
+    function getSlidesToShow() {
+      const width = window.innerWidth;
+      if (width < 600) return 2;
+      else if (width < 900) return 3;
+      else return 4;
+    }
+
+    let slidesToShow = getSlidesToShow();
+    let currentIndex = 0;
+    let totalPositions = 0;
+    let isPlaying = true;
+    let intervalTime = 3000;
+    let sliderInterval;
+
+    // Create slides from templeItems array
+    function createSlides() {
+      slider.innerHTML = "";
+      templeItems.forEach(item => {
+        const slide = document.createElement('div');
+        slide.className = 'temple-item';
+        slide.innerHTML = `
+          <img src="${item.src}" alt="${item.alt}" />
+          <p>${item.text}</p>
+        `;
+        slider.appendChild(slide);
+      });
+    }
+
+    // Setup slider widths and pagination dots
+    function setupSlider() {
+      const items = slider.querySelectorAll('.temple-item');
+      slidesToShow = getSlidesToShow();
+      items.forEach(item => {
+        item.style.flex = `0 0 ${100 / slidesToShow}%`;
+      });
+      totalPositions = templeItems.length - slidesToShow;
+      if (totalPositions < 0) totalPositions = 0;
+      buildDots();
+      if (currentIndex > totalPositions) currentIndex = totalPositions;
+      updateSlider();
+    }
+
+    // Build pagination dots
+    function buildDots() {
+      dotsContainer.innerHTML = "";
+      for (let i = 0; i <= totalPositions; i++) {
+        const dot = document.createElement('span');
+        dot.className = 'dot';
+        dot.dataset.index = i;
+        dot.addEventListener('click', () => goToSlide(i));
+        dotsContainer.appendChild(dot);
+      }
+    }
+
+    // Update slider transform and active dots
+    function updateSlider() {
+      const offset = (100 / slidesToShow) * currentIndex;
+      slider.style.transform = `translateX(-${offset}%)`;
+      updateDots();
+    }
+
+    // Update active dot styling
+    function updateDots() {
+      const dots = dotsContainer.querySelectorAll('.dot');
+      dots.forEach((dot, index) => {
+        dot.classList.toggle('active', index === currentIndex);
+      });
+    }
+
+    // Go to specific slide group
+    function goToSlide(index) {
+      currentIndex = index;
+      updateSlider();
+    }
+
+    // Move to the next slide group
+    function nextSlide() {
+      currentIndex++;
+      if (currentIndex > totalPositions) currentIndex = 0;
+      updateSlider();
+    }
+
+    // Autoplay functions
+    function startAutoplay() {
+      sliderInterval = setInterval(nextSlide, intervalTime);
+    }
+    function stopAutoplay() {
+      clearInterval(sliderInterval);
+    }
+
+    // Toggle autoplay on/off
+    toggleBtn.addEventListener('click', () => {
+      if (isPlaying) {
+        stopAutoplay();
+        toggleBtn.textContent = 'Play';
+      } else {
+        startAutoplay();
+        toggleBtn.textContent = 'Pause';
+      }
+      isPlaying = !isPlaying;
+    });
+
+    // Recalculate slider settings on window resize
+    window.addEventListener('resize', setupSlider);
+
+    // Initial setup
+    createSlides();
+    setupSlider();
+    startAutoplay();
+  </script>
+</body>
+</html>
